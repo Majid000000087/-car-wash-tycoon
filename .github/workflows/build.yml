@@ -13,11 +13,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Zip File
+      - name: Extract Zip File and Fix Paths
         run: |
           unzip -o "*.zip" -d temp
-          cp -rn temp/*/* ./ 2>/dev/null || cp -rn temp/* ./ 2>/dev/null
+          ASSETS_DIR=$(find temp -type d -name "Assets" | head -n 1)
+          PROJECT_ROOT=$(dirname "$ASSETS_DIR")
+          cp -rn "$PROJECT_ROOT"/* ./
           rm -rf temp
+          mkdir -p ProjectSettings
+          if [ -f "ProjectVersion.txt" ]; then
+            mv ProjectVersion.txt ProjectSettings/
+          fi
 
       - name: Build Unity Project
         uses: game-ci/unity-builder@v4
@@ -29,3 +35,4 @@ jobs:
         with:
           name: CarWashTycoon-APK
           path: build/Android/*.apk
+          
