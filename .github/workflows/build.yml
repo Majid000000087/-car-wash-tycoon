@@ -1,21 +1,46 @@
-name: Get Unity ALF
+name: Build Unity APK
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  generate-alf:
-    name: Generate Activation File
+  build:
+    name: Build Android APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Request activation file
-        uses: game-ci/unity-request-activation-file@v2
+      - name: Extract Zip File and Fix Paths
+        run: |
+          unzip -o "*.zip" -d temp
+          ASSETS_DIR=$(find temp -type d -name "Assets" | head -n 1)
+          PROJECT_ROOT=$(dirname "$ASSETS_DIR")
+          cp -rn "$PROJECT_ROOT"/* ./
+          rm -rf temp
+          mkdir -p ProjectSettings
+          if [ -f "ProjectVersion.txt" ]; then
+            mv ProjectVersion.txt ProjectSettings/
+          fi
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add .
+          git commit -m "Auto prepare extracted files" || true
 
-      - name: Upload ALF Artifact
+      - name: Build Unity Project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: Android
+          unityVersion: auto
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: manual-activation-file
-          path: manual-activation-file.alf
+          name: CarWashTycoon-APK
+          path: build/Android/*.apk
           
