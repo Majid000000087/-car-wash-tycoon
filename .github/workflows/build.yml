@@ -24,6 +24,10 @@ jobs:
           if [ -f "ProjectVersion.txt" ]; then
             mv ProjectVersion.txt ProjectSettings/
           fi
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add .
+          git commit -m "Auto prepare extracted files" || true
 
       - name: Build Unity Project
         uses: game-ci/unity-builder@v4
