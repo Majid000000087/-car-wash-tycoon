@@ -10,31 +10,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Zip File and Fix Paths
-        run: |
-          unzip -o "*.zip" -d temp
-          ASSETS_DIR=$(find temp -type d -name "Assets" | head -n 1)
-          PROJECT_ROOT=$(dirname "$ASSETS_DIR")
-          cp -rn "$PROJECT_ROOT"/* ./
-          rm -rf temp
-          mkdir -p ProjectSettings
-          if [ -f "ProjectVersion.txt" ]; then
-            mv ProjectVersion.txt ProjectSettings/
-          fi
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
-          git add .
-          git commit -m "Auto prepare extracted files" || true
-
-      - name: Build Unity Project (Generate ALF)
-        uses: game-ci/unity-builder@v4
-        continue-on-error: true
-        with:
-          targetPlatform: Android
+      - name: Request activation file
+        uses: game-ci/unity-request-activation-file@v2
 
       - name: Upload ALF Artifact
         uses: actions/upload-artifact@v4
         with:
           name: manual-activation-file
-          path: "**/*.alf"
+          path: manual-activation-file.alf
           
